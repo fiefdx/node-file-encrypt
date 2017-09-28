@@ -1,0 +1,16 @@
+# ignore packages
+
+*.zip
+*.rar
+*.tar.gz
+*.tar
+*.7z
+
+# ignore files
+
+*.log
+*.log.*
+
+# ignore dirs
+
+node_modules/*

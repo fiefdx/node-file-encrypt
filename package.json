@@ -1,0 +1,29 @@
+{
+  "name": "node-file-encrypt",
+  "version": "0.0.1",
+  "description": "a file encrypt & decrypt package based on TEA",
+  "main": "file_encrypt.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "node-tea": "latest",
+    "sha1": "latest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fiefdx/node-file-encrypt.git"
+  },
+  "keywords": [
+    "file",
+    "encrypt",
+    "decrypt",
+    "tea"
+  ],
+  "author": "fiefdx",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/fiefdx/node-file-encrypt/issues"
+  },
+  "homepage": "https://github.com/fiefdx/node-file-encrypt#readme"
+}
