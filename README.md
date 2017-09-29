@@ -46,6 +46,7 @@ A file encrypt & decrypt package based on TEA
    ```
 
    ```bash
+   $ sudo npm install -g node-file-encrypt
    $ crypt -h
    Usage: crypt [OPTION]...
 
