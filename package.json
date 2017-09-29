@@ -6,9 +6,13 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "bin": {
+    "crypt": "./crypt.js"
+  },
   "dependencies": {
     "node-tea": "latest",
-    "sha1": "latest"
+    "sha1": "latest",
+    "minimist": "latest"
   },
   "repository": {
     "type": "git",

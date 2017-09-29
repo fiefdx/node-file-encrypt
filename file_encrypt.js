@@ -60,9 +60,10 @@ function bytesToLong(b) {
     return i;
 }
 
-function FileEncrypt(filePath) {
-    this.filePath = filePath;
-    this.fileName = path.basename(filePath);
+function FileEncrypt(inPath, outPath) {
+    this.inPath = inPath;
+    this.outPath = outPath || path.dirname(this.inPath); // if not specified outPath, then outPath will be inPath's base path
+    this.fileName = path.basename(inPath);
     this.fileSize = 0;
     this.fileHeader = 'crypt';
     this.fileType = '.crypt';
@@ -77,12 +78,12 @@ function FileEncrypt(filePath) {
 }
 
 FileEncrypt.prototype.openSourceFile = function() {
-    if (fs.existsSync(this.filePath) && fs.lstatSync(this.filePath).isFile()) {
-        const stats = fs.statSync(this.filePath);
+    if (fs.existsSync(this.inPath) && fs.lstatSync(this.inPath).isFile()) {
+        const stats = fs.statSync(this.inPath);
         this.fileSize = stats.size;
-        this.fp = fs.openSync(this.filePath, 'r');
+        this.fp = fs.openSync(this.inPath, 'r');
     } else {
-        throw new Error(util.format("File [%s] doesn't exists!", this.filePath));
+        throw new Error(util.format("File [%s] doesn't exists!", this.inPath));
     }
 }
 
@@ -90,7 +91,7 @@ FileEncrypt.prototype.encrypt = function(key) {
     let fileNameHash = sha1(this.fileName);
     let timestamp = util.format("%d", Date.now());
     this.encryptFileName = sha1(util.format("%s%s%s", fileNameHash, this.fileSize, timestamp)) + this.fileType;
-    this.encryptFilePath = path.join(path.dirname(this.filePath), this.encryptFileName);
+    this.encryptFilePath = path.join(this.outPath, this.encryptFileName);
     let cryptFp = null;
     if (!fs.existsSync(this.encryptFilePath)) {
         cryptFp = fs.openSync(this.encryptFilePath, 'w');
@@ -153,7 +154,7 @@ FileEncrypt.prototype.decrypt = function(key) {
                 let fileNameBuf = new Buffer(this.fileNameLen);
                 fs.readSync(this.fp, fileNameBuf, 0, this.fileNameLen, this.fileNamePos);
                 let fileName = tea.bytesToStr(tea.decryptBytes(Array.from(fileNameBuf), key));
-                this.decryptFilePath = path.join(path.dirname(this.filePath), fileName);
+                this.decryptFilePath = path.join(this.outPath, fileName);
                 if (!fs.existsSync(this.decryptFilePath)) {
                     cryptFp = fs.openSync(this.decryptFilePath, 'w');
                 } else {
@@ -182,7 +183,7 @@ FileEncrypt.prototype.decrypt = function(key) {
                 throw new Error("Password is empty!");
             }
         } else {
-            throw new Error(util.format("This file [%s] is not a encrypt file!", this.filePath));
+            throw new Error(util.format("This file [%s] is not a encrypt file!", this.inPath));
         }
     }
 }
@@ -213,7 +214,7 @@ FileEncrypt.prototype.info = function(key) {
                 throw new Error("Password is empty!");
             }
         } else {
-            throw new Error(util.format("This file [%s] is not a encrypt file!", this.filePath));
+            throw new Error(util.format("This file [%s] is not a encrypt file!", this.inPath));
         }
     }
     fs.closeSync(this.fp);
