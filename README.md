@@ -44,3 +44,17 @@ A file encrypt & decrypt package based on TEA
        console.log(f.info('111111'));
    }
    ```
+
+   ```bash
+   $ crypt -h
+   Usage: crypt [OPTION]...
+
+    Options:
+    -e : encrypt input file
+    -d : decrypt input file
+    -b : encrypt block size, defaults 8k (-b=8)
+    -p : password
+    -i : input file path (include file name)
+    -o : output file path (exclude file name)
+    -h : get this help
+   ```
