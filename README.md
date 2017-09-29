@@ -19,7 +19,7 @@ A file encrypt & decrypt package based on TEA
    ```javascript
    const fs = require('fs');
 
-   const encrypt = require('./file_encrypt.js');
+   const encrypt = require('node-file-encrypt');
 
    let filePath = '/home/breeze/Develop/callingwiewer_error.log'; // source file path
    let encryptPath = '';
