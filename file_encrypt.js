@@ -12,7 +12,11 @@ const sha1 = require('sha1');
 let encrypt_block_size = 1024 * 8;
 
 function getEncryptLength(length) {
-    let fillN = (8 - (length + 2)) % 8 + 2;
+    let fillN = (8 - (length + 2)) % 8;
+    if (fillN < 0) {
+        fillN += 8;
+    }
+    fillN += 2;
     return 1 + length + fillN + 7;
 }
 
@@ -177,6 +181,7 @@ FileEncrypt.prototype.decrypt = function(key) {
                     this.fileLen -= size;
                     let decryptBytes = tea.decryptBytes(Array.from(buf.slice(0, size)), key);
                     fs.writeFileSync(cryptFp, new Buffer(decryptBytes), {encoding: 'binary', flag: 'a'});
+                    currentPos += size;
                 }
                 fs.closeSync(cryptFp);
             } else {
