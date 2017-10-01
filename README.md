@@ -53,7 +53,6 @@ A file encrypt & decrypt package based on TEA
     Options:
     -e : encrypt input file
     -d : decrypt input file
-    -b : encrypt block size, defaults 8k (-b=8)
     -p : password
     -i : input file path (include file name)
     -o : output file path (exclude file name)
