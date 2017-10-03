@@ -1,4 +1,4 @@
-# node-tea
+# node-file-encrypt
 
 A file encrypt & decrypt package based on TEA
 
