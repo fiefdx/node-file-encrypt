@@ -79,7 +79,7 @@ function FileEncrypt(inPath, outPath) {
     this.encryptFilePath = '';
     this.decryptFilePath = '';
     this.fp = null;
-    this.progressCallInterval = 100; // 1 second
+    this.progressCallInterval = 100; // 100 milliseconds
 }
 
 FileEncrypt.prototype.openSourceFile = function() {
@@ -92,7 +92,7 @@ FileEncrypt.prototype.openSourceFile = function() {
     }
 }
 
-FileEncrypt.prototype.encrypt = function(key, progressCallback) {
+FileEncrypt.prototype.encrypt = function(key, progressCallback) { // progressCallback(percent, startAt)
     let startAt = new Date();
     let lastCallAt = new Date();
     let fileNameHash = sha1(this.fileName);
@@ -154,7 +154,7 @@ FileEncrypt.prototype.encrypt = function(key, progressCallback) {
     }
 }
 
-FileEncrypt.prototype.decrypt = function(key, progressCallback) {
+FileEncrypt.prototype.decrypt = function(key, progressCallback) { // progressCallback(percent, startAt)
     let startAt = new Date();
     let lastCallAt = new Date();
     let cryptFp = null;
