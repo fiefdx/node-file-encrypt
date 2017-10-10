@@ -12,7 +12,9 @@
   "dependencies": {
     "node-tea": "latest",
     "sha1": "latest",
-    "minimist": "latest"
+    "minimist": "latest",
+    "log-update": "latest",
+    "duration": "latest"
   },
   "repository": {
     "type": "git",

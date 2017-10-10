@@ -2,6 +2,8 @@
 
 const util = require('util');
 
+const logUpdate = require('log-update');
+const duration = require('duration');
 const argv = require('minimist')(process.argv.slice(2));
 const fileEncrypt = require('./file_encrypt.js').FileEncrypt;
 
@@ -14,6 +16,8 @@ let defaults = {
     l: false // list original file name
 };
 let options = {};
+const frames = ['-', '\\', '|', '/'];
+let frameN = 0;
 
 
 function help() {
@@ -49,12 +53,22 @@ function main() {
         } else if (options.e && options.p != '' && options.i != '') { // encrypt file
             let f = new fileEncrypt(options.i, options.o);
             f.openSourceFile();
-            f.encrypt(options.p);
+            f.encrypt(options.p, function(percent, startAt){
+                const frame = frames[frameN = ++frameN % frames.length];
+                const useTime = duration(startAt, new Date()).toString(1);
+                const message = `${frame} encrypt: ${percent}% - ${useTime}`;
+                logUpdate(message);
+            });
             console.log(f.encryptFilePath);
         } else if (options.d && options.p != '' && options.i != '') { // decrypt file
             let f = new fileEncrypt(options.i, options.o);
             f.openSourceFile();
-            f.decrypt(options.p);
+            f.decrypt(options.p, function(percent, startAt){
+                const frame = frames[frameN = ++frameN % frames.length];
+                const useTime = duration(startAt, new Date()).toString(1);
+                const message = `${frame} decrypt: ${percent}% - ${useTime}`;
+                logUpdate(message);
+            });
             console.log(f.decryptFilePath);
         } else {
             help();

@@ -79,6 +79,7 @@ function FileEncrypt(inPath, outPath) {
     this.encryptFilePath = '';
     this.decryptFilePath = '';
     this.fp = null;
+    this.progressCallInterval = 100; // 1 second
 }
 
 FileEncrypt.prototype.openSourceFile = function() {
@@ -91,7 +92,9 @@ FileEncrypt.prototype.openSourceFile = function() {
     }
 }
 
-FileEncrypt.prototype.encrypt = function(key) {
+FileEncrypt.prototype.encrypt = function(key, progressCallback) {
+    let startAt = new Date();
+    let lastCallAt = new Date();
     let fileNameHash = sha1(this.fileName);
     let timestamp = util.format("%d", Date.now());
     this.encryptFileName = sha1(util.format("%s%s%s", fileNameHash, this.fileSize, timestamp)) + this.fileType;
@@ -104,6 +107,9 @@ FileEncrypt.prototype.encrypt = function(key) {
     }
     if (this.fp && cryptFp) {
         if (key != '') {
+            if (progressCallback && typeof progressCallback === 'function') {
+                progressCallback(0, startAt);
+            }
             let headerFileName = tea.strToBytes(tea.encrypt(this.fileName, key));
             this.fileNamePos = 25;
             this.fileNameLen = headerFileName.length;
@@ -126,8 +132,20 @@ FileEncrypt.prototype.encrypt = function(key) {
                 this.fileLen += cryptBuf.length;
                 fs.writeFileSync(cryptFp, cryptBuf, {encoding: 'binary', flag: 'a'});
                 currentPos += encrypt_block_size;
+                let now = Date.now();
+                if (progressCallback && typeof progressCallback === 'function' && currentPos < this.fileSize && now - lastCallAt.getTime() >= this.progressCallInterval) {
+                    let percent = Math.floor(currentPos * 100 / this.fileSize);
+                    if (percent > 100) {
+                        percent = 100;
+                    }
+                    progressCallback(percent, startAt);
+                    lastCallAt = new Date();
+                }
             }
             fs.writeSync(cryptFp, new Buffer(longToBytes(this.fileLen)), 0, 8, 17);
+            if (progressCallback && typeof progressCallback === 'function') {
+                progressCallback(100, startAt);
+            }
         } else {
             throw new Error("Password is empty!");
         }
@@ -136,13 +154,18 @@ FileEncrypt.prototype.encrypt = function(key) {
     }
 }
 
-FileEncrypt.prototype.decrypt = function(key) {
+FileEncrypt.prototype.decrypt = function(key, progressCallback) {
+    let startAt = new Date();
+    let lastCallAt = new Date();
     let cryptFp = null;
     if (this.fp) {
         let fileHeader = new Buffer(this.fileHeader.length);
         fs.readSync(this.fp, fileHeader, 0, 5);
         if (tea.bytesToStr(Array.from(fileHeader)) == this.fileHeader) {
             if (key != '') {
+                if (progressCallback && typeof progressCallback === 'function') {
+                    progressCallback(0, startAt);
+                }
                 let fileNamePosBuf = new Buffer(4);
                 let fileNameLenBuf = new Buffer(4);
                 let filePosBuf = new Buffer(4);
@@ -182,8 +205,20 @@ FileEncrypt.prototype.decrypt = function(key) {
                     let decryptBytes = tea.decryptBytes(Array.from(buf.slice(0, size)), key);
                     fs.writeFileSync(cryptFp, new Buffer(decryptBytes), {encoding: 'binary', flag: 'a'});
                     currentPos += size;
+                    let now = Date.now();
+                    if (progressCallback && typeof progressCallback === 'function' && currentPos < this.fileSize && now - lastCallAt.getTime() >= this.progressCallInterval) {
+                        let percent = Math.floor(currentPos * 100 / this.fileSize);
+                        if (percent > 100) {
+                            percent = 100;
+                        }
+                        progressCallback(percent, startAt);
+                        lastCallAt = new Date();
+                    }
                 }
                 fs.closeSync(cryptFp);
+                if (progressCallback && typeof progressCallback === 'function') {
+                    progressCallback(100, startAt);
+                }
             } else {
                 throw new Error("Password is empty!");
             }
