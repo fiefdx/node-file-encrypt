@@ -35,7 +35,8 @@ function help() {
 `));
 }
 
-function main() {
+async function main() {
+
     // parse options
     for (let k in defaults) {
         options[k] = argv[k] || defaults[k];
@@ -53,7 +54,7 @@ function main() {
         } else if (options.e && options.p != '' && options.i != '') { // encrypt file
             let f = new fileEncrypt(options.i, options.o);
             f.openSourceFile();
-            f.encrypt(options.p, function(percent, startAt){
+            await f.encryptAsync(options.p, function(percent, startAt) {
                 const frame = frames[frameN = ++frameN % frames.length];
                 const useTime = duration(startAt, new Date()).toString(1);
                 const message = `${frame} encrypt: ${percent}% - ${useTime}`;
@@ -63,7 +64,7 @@ function main() {
         } else if (options.d && options.p != '' && options.i != '') { // decrypt file
             let f = new fileEncrypt(options.i, options.o);
             f.openSourceFile();
-            f.decrypt(options.p, function(percent, startAt){
+            await f.decryptAsync(options.p, function(percent, startAt){
                 const frame = frames[frameN = ++frameN % frames.length];
                 const useTime = duration(startAt, new Date()).toString(1);
                 const message = `${frame} decrypt: ${percent}% - ${useTime}`;
