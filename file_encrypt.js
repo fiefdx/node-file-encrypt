@@ -235,7 +235,8 @@ FileEncrypt.prototype.decrypt = function(key, progressCallback) { // progressCal
     }
 }
 
-FileEncrypt.prototype.encryptAsync = async function(key, progressCallback) {
+FileEncrypt.prototype.encryptAsync = async function(key, progressCallback, callback) {
+    let err = null;
     let startAt = new Date();
     let lastCallAt = new Date();
     let fileNameHash = sha1(this.fileName);
@@ -245,60 +246,63 @@ FileEncrypt.prototype.encryptAsync = async function(key, progressCallback) {
     let cryptFp = null;
     if (!fs.existsSync(this.encryptFilePath)) {
         cryptFp = await fsOpen(this.encryptFilePath, 'w');
-    } else {
-        throw new Error(util.format("Encrypt file [%s] exists already!", this.encryptFilePath));
-    }
-    if (this.fp && cryptFp) {
-        if (key != '') {
-            if (progressCallback && typeof progressCallback === 'function') {
-                progressCallback(0, startAt);
-            }
-            let headerFileName = tea.strToBytes(tea.encrypt(this.fileName, key));
-            this.fileNamePos = 25;
-            this.fileNameLen = headerFileName.length;
-            this.filePos = this.fileNamePos + this.fileNameLen;
-            await fsWriteFile(cryptFp, new Buffer(tea.strToBytes(this.fileHeader)), {encoding: 'binary', flag: 'a'});
-            await fsWriteFile(cryptFp, new Buffer(intToBytes(this.fileNamePos)), {encoding: 'binary', flag: 'a'});
-            await fsWriteFile(cryptFp, new Buffer(intToBytes(this.fileNameLen)), {encoding: 'binary', flag: 'a'});
-            await fsWriteFile(cryptFp, new Buffer(intToBytes(this.filePos)), {encoding: 'binary', flag: 'a'});
-            await fsWriteFile(cryptFp, new Buffer(longToBytes(this.fileLen)), {encoding: 'binary', flag: 'a'});
-            await fsWriteFile(cryptFp, new Buffer(headerFileName), {encoding: 'binary', flag: 'a'});
-            let currentPos = 0;
-            while (true) {
-                let buf = new Buffer(encrypt_block_size);
-                let r = await fsRead(this.fp, buf, 0, encrypt_block_size, currentPos);
-                let size = r.bytesRead;
-                if (size == 0) {
-                    await fsClose(this.fp);
-                    break;
+        if (this.fp && cryptFp) {
+            if (key != '') {
+                if (progressCallback && typeof progressCallback === 'function') {
+                    progressCallback(0, startAt);
                 }
-                let cryptBuf = new Buffer(tea.encryptBytes(Array.from(buf.slice(0, size)), key));
-                this.fileLen += cryptBuf.length;
-                await fsWriteFile(cryptFp, cryptBuf, {encoding: 'binary', flag: 'a'});
-                currentPos += encrypt_block_size;
-                let now = Date.now();
-                if (progressCallback && typeof progressCallback === 'function' && currentPos < this.fileSize && now - lastCallAt.getTime() >= this.progressCallInterval) {
-                    let percent = Math.floor(currentPos * 100 / this.fileSize);
-                    if (percent > 100) {
-                        percent = 100;
+                let headerFileName = tea.strToBytes(tea.encrypt(this.fileName, key));
+                this.fileNamePos = 25;
+                this.fileNameLen = headerFileName.length;
+                this.filePos = this.fileNamePos + this.fileNameLen;
+                await fsWriteFile(cryptFp, new Buffer(tea.strToBytes(this.fileHeader)), {encoding: 'binary', flag: 'a'});
+                await fsWriteFile(cryptFp, new Buffer(intToBytes(this.fileNamePos)), {encoding: 'binary', flag: 'a'});
+                await fsWriteFile(cryptFp, new Buffer(intToBytes(this.fileNameLen)), {encoding: 'binary', flag: 'a'});
+                await fsWriteFile(cryptFp, new Buffer(intToBytes(this.filePos)), {encoding: 'binary', flag: 'a'});
+                await fsWriteFile(cryptFp, new Buffer(longToBytes(this.fileLen)), {encoding: 'binary', flag: 'a'});
+                await fsWriteFile(cryptFp, new Buffer(headerFileName), {encoding: 'binary', flag: 'a'});
+                let currentPos = 0;
+                while (true) {
+                    let buf = new Buffer(encrypt_block_size);
+                    let r = await fsRead(this.fp, buf, 0, encrypt_block_size, currentPos);
+                    let size = r.bytesRead;
+                    if (size == 0) {
+                        await fsClose(this.fp);
+                        break;
                     }
-                    progressCallback(percent, startAt);
-                    lastCallAt = new Date();
+                    let cryptBuf = new Buffer(tea.encryptBytes(Array.from(buf.slice(0, size)), key));
+                    this.fileLen += cryptBuf.length;
+                    await fsWriteFile(cryptFp, cryptBuf, {encoding: 'binary', flag: 'a'});
+                    currentPos += encrypt_block_size;
+                    let now = Date.now();
+                    if (progressCallback && typeof progressCallback === 'function' && currentPos < this.fileSize && now - lastCallAt.getTime() >= this.progressCallInterval) {
+                        let percent = Math.floor(currentPos * 100 / this.fileSize);
+                        if (percent > 100) {
+                            percent = 100;
+                        }
+                        progressCallback(percent, startAt);
+                        lastCallAt = new Date();
+                    }
                 }
+                await fsWrite(cryptFp, new Buffer(longToBytes(this.fileLen)), 0, 8, 17);
+                if (progressCallback && typeof progressCallback === 'function') {
+                    progressCallback(100, startAt);
+                }
+            } else {
+                err = new Error("Password is empty!");
             }
-            await fsWrite(cryptFp, new Buffer(longToBytes(this.fileLen)), 0, 8, 17);
-            if (progressCallback && typeof progressCallback === 'function') {
-                progressCallback(100, startAt);
-            }
-        } else {
-            throw new Error("Password is empty!");
+            await fsClose(cryptFp);
         }
-
-        await fsClose(cryptFp);
+    } else {
+        err = new Error(util.format("Encrypt file [%s] exists already!", this.encryptFilePath));
+    }
+    if (callback) {
+        callback(err);
     }
 }
 
-FileEncrypt.prototype.decryptAsync = async function(key, progressCallback) { // progressCallback(percent, startAt)
+FileEncrypt.prototype.decryptAsync = async function(key, progressCallback, callback) { // progressCallback(percent, startAt)
+    let err = null;
     let startAt = new Date();
     let lastCallAt = new Date();
     let cryptFp = null;
@@ -328,49 +332,53 @@ FileEncrypt.prototype.decryptAsync = async function(key, progressCallback) { // 
                 this.decryptFilePath = path.join(this.outPath, fileName);
                 if (!fs.existsSync(this.decryptFilePath)) {
                     cryptFp = await fsOpen(this.decryptFilePath, 'w');
-                } else {
-                    throw new Error(util.format("Decrypt file [%s] exists already!", this.decryptFilePath));
-                }
-                let cryptLength = getEncryptLength(encrypt_block_size);
-                let currentPos = this.filePos;
-                while (true) {
-                    let size = 0;
-                    let buf = new Buffer(cryptLength);
-                    if (this.fileLen < cryptLength) {
-                        let r = await fsRead(this.fp, buf, 0, this.fileLen, currentPos);
-                        size = r.bytesRead;
-                    } else {
-                        let r = await fsRead(this.fp, buf, 0, cryptLength, currentPos);
-                        size = r.bytesRead;
-                    }
-                    if (size == 0) {
-                        await fsClose(this.fp);
-                        break;
-                    }
-                    this.fileLen -= size;
-                    let decryptBytes = tea.decryptBytes(Array.from(buf.slice(0, size)), key);
-                    await fsWriteFile(cryptFp, new Buffer(decryptBytes), {encoding: 'binary', flag: 'a'});
-                    currentPos += size;
-                    let now = Date.now();
-                    if (progressCallback && typeof progressCallback === 'function' && currentPos < this.fileSize && now - lastCallAt.getTime() >= this.progressCallInterval) {
-                        let percent = Math.floor(currentPos * 100 / this.fileSize);
-                        if (percent > 100) {
-                            percent = 100;
+                    let cryptLength = getEncryptLength(encrypt_block_size);
+                    let currentPos = this.filePos;
+                    while (true) {
+                        let size = 0;
+                        let buf = new Buffer(cryptLength);
+                        if (this.fileLen < cryptLength) {
+                            let r = await fsRead(this.fp, buf, 0, this.fileLen, currentPos);
+                            size = r.bytesRead;
+                        } else {
+                            let r = await fsRead(this.fp, buf, 0, cryptLength, currentPos);
+                            size = r.bytesRead;
                         }
-                        progressCallback(percent, startAt);
-                        lastCallAt = new Date();
+                        if (size == 0) {
+                            await fsClose(this.fp);
+                            break;
+                        }
+                        this.fileLen -= size;
+                        let decryptBytes = tea.decryptBytes(Array.from(buf.slice(0, size)), key);
+                        await fsWriteFile(cryptFp, new Buffer(decryptBytes), {encoding: 'binary', flag: 'a'});
+                        currentPos += size;
+                        let now = Date.now();
+                        if (progressCallback && typeof progressCallback === 'function' && currentPos < this.fileSize && now - lastCallAt.getTime() >= this.progressCallInterval) {
+                            let percent = Math.floor(currentPos * 100 / this.fileSize);
+                            if (percent > 100) {
+                                percent = 100;
+                            }
+                            progressCallback(percent, startAt);
+                            lastCallAt = new Date();
+                        }
                     }
+                    await fsClose(cryptFp);
+                    if (progressCallback && typeof progressCallback === 'function') {
+                        progressCallback(100, startAt);
+                    }
+                } else {
+                    err = new Error(util.format("Decrypt file [%s] exists already!", this.decryptFilePath));
                 }
-                await fsClose(cryptFp);
-                if (progressCallback && typeof progressCallback === 'function') {
-                    progressCallback(100, startAt);
-                }
+                
             } else {
-                throw new Error("Password is empty!");
+                err = new Error("Password is empty!");
             }
         } else {
-            throw new Error(util.format("This file [%s] is not a encrypt file!", this.inPath));
+            err = new Error(util.format("This file [%s] is not a encrypt file!", this.inPath));
         }
+    }
+    if (callback) {
+        callback(err);
     }
 }
 

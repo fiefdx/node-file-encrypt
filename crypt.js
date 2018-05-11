@@ -59,8 +59,10 @@ async function main() {
                 const useTime = duration(startAt, new Date()).toString(1);
                 const message = `${frame} encrypt: ${percent}% - ${useTime}`;
                 logUpdate(message);
+            }, function(err) {
+                if (err) console.log("err: " + err);
+                else console.log(f.encryptFilePath);
             });
-            console.log(f.encryptFilePath);
         } else if (options.d && options.p != '' && options.i != '') { // decrypt file
             let f = new fileEncrypt(options.i, options.o);
             f.openSourceFile();
@@ -69,8 +71,10 @@ async function main() {
                 const useTime = duration(startAt, new Date()).toString(1);
                 const message = `${frame} decrypt: ${percent}% - ${useTime}`;
                 logUpdate(message);
+            }, function(err) {
+                if (err) console.log("err: " + err);
+                console.log(f.decryptFilePath);
             });
-            console.log(f.decryptFilePath);
         } else {
             help();
         }
