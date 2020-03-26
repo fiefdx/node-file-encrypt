@@ -18,7 +18,7 @@ let encryptPath = '';
 }
 
 {
-    let f = new encrypt.FileEncrypt(filePath, outPath, '.conexus');
+    let f = new encrypt.FileEncrypt(filePath, outPath, '.myFile');
     f.openSourceFile();
     f.encrypt('111111');
     encryptPath = f.encryptFilePath;
@@ -26,7 +26,7 @@ let encryptPath = '';
 }
 
 {
-    let f = new encrypt.FileEncrypt(filePath, outPath, '.conexus', false);
+    let f = new encrypt.FileEncrypt(filePath, outPath, '.myFile', false);
     f.openSourceFile();
     f.encrypt('111111');
     encryptPath = f.encryptFilePath;

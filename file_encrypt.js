@@ -246,10 +246,16 @@ FileEncrypt.prototype.encryptAsync = async function(key, progressCallback, callb
     let err = null;
     let startAt = new Date();
     let lastCallAt = new Date();
-    let fileNameHash = sha1(this.fileName);
-    let timestamp = util.format("%d", Date.now());
-    this.encryptFileName = sha1(util.format("%s%s%s", fileNameHash, this.fileSize, timestamp)) + this.fileType;
-    this.encryptFilePath = path.join(this.outPath, this.encryptFileName);
+
+    if (this.cryptFileName) {
+        let fileNameHash = sha1(this.fileName);
+        let timestamp = util.format("%d", Date.now());
+        this.encryptFileName = sha1(util.format("%s%s%s", fileNameHash, this.fileSize, timestamp)) + this.fileType;
+        this.encryptFilePath = path.join(this.outPath, this.encryptFileName);
+    } else {
+        let fileName = this.fileName.replace(/\.[^.]*$/, '') + this.fileType;
+        this.encryptFilePath = path.join(this.outPath, fileName);
+    }
     let cryptFp = null;
     if (!fs.existsSync(this.encryptFilePath)) {
         cryptFp = await fsOpen(this.encryptFilePath, 'w');
