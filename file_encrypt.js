@@ -71,13 +71,14 @@ function bytesToLong(b) {
     return i;
 }
 
-function FileEncrypt(inPath, outPath) {
+function FileEncrypt(inPath, outPath, fileType, cryptFileName = true) {
     this.inPath = inPath;
     this.outPath = outPath || path.dirname(this.inPath); // if not specified outPath, then outPath will be inPath's base path
     this.fileName = path.basename(inPath);
     this.fileSize = 0;
     this.fileHeader = 'crypt';
-    this.fileType = '.crypt';
+    this.fileType = fileType || '.crypt';
+    this.cryptFileName = cryptFileName;
     this.fileNamePos = 0;
     this.fileNameLen = 0;
     this.filePos = 0;
@@ -102,10 +103,16 @@ FileEncrypt.prototype.openSourceFile = function() {
 FileEncrypt.prototype.encrypt = function(key, progressCallback) { // progressCallback(percent, startAt)
     let startAt = new Date();
     let lastCallAt = new Date();
-    let fileNameHash = sha1(this.fileName);
-    let timestamp = util.format("%d", Date.now());
-    this.encryptFileName = sha1(util.format("%s%s%s", fileNameHash, this.fileSize, timestamp)) + this.fileType;
-    this.encryptFilePath = path.join(this.outPath, this.encryptFileName);
+
+    if (this.cryptFileName) {
+        let fileNameHash = sha1(this.fileName);
+        let timestamp = util.format("%d", Date.now());
+        this.encryptFileName = sha1(util.format("%s%s%s", fileNameHash, this.fileSize, timestamp)) + this.fileType;
+        this.encryptFilePath = path.join(this.outPath, this.encryptFileName);
+    } else {
+        let fileName = this.fileName.replace(/\.[^.]*$/, '') + this.fileType;
+        this.encryptFilePath = path.join(this.outPath, fileName);
+    }
     let cryptFp = null;
     if (!fs.existsSync(this.encryptFilePath)) {
         cryptFp = fs.openSync(this.encryptFilePath, 'w');

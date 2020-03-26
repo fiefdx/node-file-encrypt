@@ -15,3 +15,4 @@
 # ignore dirs
 
 node_modules/*
+.idea
