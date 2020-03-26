@@ -5,7 +5,9 @@ const fs = require('fs');
 const encrypt = require('./file_encrypt.js');
 
 let filePath = '/home/breeze/Develop/fast2array.tar';
+let outPath = '/home/breeze/Develop/';
 let encryptPath = '';
+
 
 {
     let f = new encrypt.FileEncrypt(filePath);
@@ -14,6 +16,23 @@ let encryptPath = '';
     encryptPath = f.encryptFilePath;
     console.log("encrypt sync done");
 }
+
+{
+    let f = new encrypt.FileEncrypt(filePath, outPath, '.conexus');
+    f.openSourceFile();
+    f.encrypt('111111');
+    encryptPath = f.encryptFilePath;
+    console.log("encrypt sync with custom ending done");
+}
+
+{
+    let f = new encrypt.FileEncrypt(filePath, outPath, '.conexus', false);
+    f.openSourceFile();
+    f.encrypt('111111');
+    encryptPath = f.encryptFilePath;
+    console.log("encrypt sync with custom ending and not encrypted fileName done");
+}
+
 
 {
     fs.unlink(filePath, function() {});
