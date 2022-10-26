@@ -1,6 +1,6 @@
 {
   "name": "node-file-encrypt",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "a file encrypt & decrypt package based on TEA",
   "main": "file_encrypt.js",
   "scripts": {
