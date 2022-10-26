@@ -17,9 +17,9 @@ A file encrypt & decrypt package based on TEA
 2. use it
    
    ```javascript
-   const fs = require('fs');
+   import fs from 'fs';
 
-   const encrypt = require('node-file-encrypt');
+   import { FileEncrypt } from 'node-file-encrypt';
 
    let filePath = '/home/breeze/Develop/fast2array.tar'; // source file path
    let encryptPath = '';
@@ -30,7 +30,7 @@ A file encrypt & decrypt package based on TEA
        // outPath      - this is optional  - the Path for the encrypted file
        // fileEnding   - this is optional  - a custom fileEnding like '.myFile', default is '.crypt'
        // cryptFileName - this is optional - boolean if the filename should be hashed, default is true
-       let f = new encrypt.FileEncrypt(filePath);
+       let f = new FileEncrypt(filePath);
        f.openSourceFile();
        f.encrypt('111111');
        encryptPath = f.encryptFilePath;
@@ -39,26 +39,26 @@ A file encrypt & decrypt package based on TEA
 
    { // decrypt file
        fs.unlink(filePath, function() {});
-       let f = new encrypt.FileEncrypt(encryptPath);
+       let f = new FileEncrypt(encryptPath);
        f.openSourceFile();
        f.decrypt('111111');
        console.log("decrypt sync done");
    }
 
    { // get original file name from encrypted file
-       let f = new encrypt.FileEncrypt(encryptPath);
+       let f = new FileEncrypt(encryptPath);
        f.openSourceFile();
        console.log(f.info('111111'));
    }
 
    { // encrypt & decrypt file async
-       let f = new encrypt.FileEncrypt(filePath);
+       let f = new FileEncrypt(filePath);
        f.openSourceFile();
        f.encryptAsync('111111').then(function() {
            encryptPath = f.encryptFilePath;
            console.log("encrypt async done");
            fs.unlink(filePath, function() {});
-           let d = new encrypt.FileEncrypt(encryptPath);
+           let d = new FileEncrypt(encryptPath);
            d.openSourceFile();
            d.decryptAsync('111111').then(function() {
                console.log("decrypt async done");
