@@ -128,21 +128,21 @@ FileEncrypt.prototype.encrypt = function(key, progressCallback) { // progressCal
             this.fileNamePos = 25;
             this.fileNameLen = headerFileName.length;
             this.filePos = this.fileNamePos + this.fileNameLen;
-            fs.writeFileSync(cryptFp, new Buffer(tea.strToBytes(this.fileHeader)), {encoding: 'binary', flag: 'a'});
-            fs.writeFileSync(cryptFp, new Buffer(intToBytes(this.fileNamePos)), {encoding: 'binary', flag: 'a'});
-            fs.writeFileSync(cryptFp, new Buffer(intToBytes(this.fileNameLen)), {encoding: 'binary', flag: 'a'});
-            fs.writeFileSync(cryptFp, new Buffer(intToBytes(this.filePos)), {encoding: 'binary', flag: 'a'});
-            fs.writeFileSync(cryptFp, new Buffer(longToBytes(this.fileLen)), {encoding: 'binary', flag: 'a'});
-            fs.writeFileSync(cryptFp, new Buffer(headerFileName), {encoding: 'binary', flag: 'a'});
+            fs.writeFileSync(cryptFp, new Buffer.from(tea.strToBytes(this.fileHeader)), {encoding: 'binary', flag: 'a'});
+            fs.writeFileSync(cryptFp, new Buffer.from(intToBytes(this.fileNamePos)), {encoding: 'binary', flag: 'a'});
+            fs.writeFileSync(cryptFp, new Buffer.from(intToBytes(this.fileNameLen)), {encoding: 'binary', flag: 'a'});
+            fs.writeFileSync(cryptFp, new Buffer.from(intToBytes(this.filePos)), {encoding: 'binary', flag: 'a'});
+            fs.writeFileSync(cryptFp, new Buffer.from(longToBytes(this.fileLen)), {encoding: 'binary', flag: 'a'});
+            fs.writeFileSync(cryptFp, new Buffer.from(headerFileName), {encoding: 'binary', flag: 'a'});
             let currentPos = 0;
             while (true) {
-                let buf = new Buffer(encrypt_block_size);
+                let buf = new Buffer.alloc(encrypt_block_size);
                 let size = fs.readSync(this.fp, buf, 0, encrypt_block_size, currentPos);
                 if (size == 0) {
                     fs.closeSync(this.fp);
                     break;
                 }
-                let cryptBuf = new Buffer(tea.encryptBytes(Array.from(buf.slice(0, size)), key));
+                let cryptBuf = new Buffer.from(tea.encryptBytes(Array.from(buf.slice(0, size)), key));
                 this.fileLen += cryptBuf.length;
                 fs.writeFileSync(cryptFp, cryptBuf, {encoding: 'binary', flag: 'a'});
                 currentPos += encrypt_block_size;
@@ -156,7 +156,7 @@ FileEncrypt.prototype.encrypt = function(key, progressCallback) { // progressCal
                     lastCallAt = new Date();
                 }
             }
-            fs.writeSync(cryptFp, new Buffer(longToBytes(this.fileLen)), 0, 8, 17);
+            fs.writeSync(cryptFp, new Buffer.from(longToBytes(this.fileLen)), 0, 8, 17);
             if (progressCallback && typeof progressCallback === 'function') {
                 progressCallback(100, startAt);
             }
@@ -173,17 +173,17 @@ FileEncrypt.prototype.decrypt = function(key, progressCallback) { // progressCal
     let lastCallAt = new Date();
     let cryptFp = null;
     if (this.fp) {
-        let fileHeader = new Buffer(this.fileHeader.length);
+        let fileHeader = new Buffer.alloc(this.fileHeader.length);
         fs.readSync(this.fp, fileHeader, 0, 5);
         if (tea.bytesToStr(Array.from(fileHeader)) == this.fileHeader) {
             if (key != '') {
                 if (progressCallback && typeof progressCallback === 'function') {
                     progressCallback(0, startAt);
                 }
-                let fileNamePosBuf = new Buffer(4);
-                let fileNameLenBuf = new Buffer(4);
-                let filePosBuf = new Buffer(4);
-                let fileLenBuf = new Buffer(8);
+                let fileNamePosBuf = new Buffer.alloc(4);
+                let fileNameLenBuf = new Buffer.alloc(4);
+                let filePosBuf = new Buffer.alloc(4);
+                let fileLenBuf = new Buffer.alloc(8);
                 fs.readSync(this.fp, fileNamePosBuf, 0, 4);
                 fs.readSync(this.fp, fileNameLenBuf, 0, 4);
                 fs.readSync(this.fp, filePosBuf, 0, 4);
@@ -192,7 +192,7 @@ FileEncrypt.prototype.decrypt = function(key, progressCallback) { // progressCal
                 this.fileNameLen = bytesToInt(Array.from(fileNameLenBuf));
                 this.filePos = bytesToInt(Array.from(filePosBuf));
                 this.fileLen = bytesToLong(Array.from(fileLenBuf));
-                let fileNameBuf = new Buffer(this.fileNameLen);
+                let fileNameBuf = new Buffer.alloc(this.fileNameLen);
                 fs.readSync(this.fp, fileNameBuf, 0, this.fileNameLen, this.fileNamePos);
                 let fileName = tea.bytesToStr(tea.decryptBytes(Array.from(fileNameBuf), key));
                 this.decryptFilePath = path.join(this.outPath, fileName);
@@ -205,7 +205,7 @@ FileEncrypt.prototype.decrypt = function(key, progressCallback) { // progressCal
                 let currentPos = this.filePos;
                 while (true) {
                     let size = 0;
-                    let buf = new Buffer(cryptLength);
+                    let buf = new Buffer.alloc(cryptLength);
                     if (this.fileLen < cryptLength) {
                         size = fs.readSync(this.fp, buf, 0, this.fileLen, currentPos);
                     } else {
@@ -217,7 +217,7 @@ FileEncrypt.prototype.decrypt = function(key, progressCallback) { // progressCal
                     }
                     this.fileLen -= size;
                     let decryptBytes = tea.decryptBytes(Array.from(buf.slice(0, size)), key);
-                    fs.writeFileSync(cryptFp, new Buffer(decryptBytes), {encoding: 'binary', flag: 'a'});
+                    fs.writeFileSync(cryptFp, new Buffer.from(decryptBytes), {encoding: 'binary', flag: 'a'});
                     currentPos += size;
                     let now = Date.now();
                     if (progressCallback && typeof progressCallback === 'function' && currentPos < this.fileSize && now - lastCallAt.getTime() >= this.progressCallInterval) {
@@ -268,22 +268,22 @@ FileEncrypt.prototype.encryptAsync = async function(key, progressCallback, callb
                 this.fileNamePos = 25;
                 this.fileNameLen = headerFileName.length;
                 this.filePos = this.fileNamePos + this.fileNameLen;
-                await fsWriteFile(cryptFp, new Buffer(tea.strToBytes(this.fileHeader)), {encoding: 'binary', flag: 'a'});
-                await fsWriteFile(cryptFp, new Buffer(intToBytes(this.fileNamePos)), {encoding: 'binary', flag: 'a'});
-                await fsWriteFile(cryptFp, new Buffer(intToBytes(this.fileNameLen)), {encoding: 'binary', flag: 'a'});
-                await fsWriteFile(cryptFp, new Buffer(intToBytes(this.filePos)), {encoding: 'binary', flag: 'a'});
-                await fsWriteFile(cryptFp, new Buffer(longToBytes(this.fileLen)), {encoding: 'binary', flag: 'a'});
-                await fsWriteFile(cryptFp, new Buffer(headerFileName), {encoding: 'binary', flag: 'a'});
+                await fsWriteFile(cryptFp, new Buffer.from(tea.strToBytes(this.fileHeader)), {encoding: 'binary', flag: 'a'});
+                await fsWriteFile(cryptFp, new Buffer.from(intToBytes(this.fileNamePos)), {encoding: 'binary', flag: 'a'});
+                await fsWriteFile(cryptFp, new Buffer.from(intToBytes(this.fileNameLen)), {encoding: 'binary', flag: 'a'});
+                await fsWriteFile(cryptFp, new Buffer.from(intToBytes(this.filePos)), {encoding: 'binary', flag: 'a'});
+                await fsWriteFile(cryptFp, new Buffer.from(longToBytes(this.fileLen)), {encoding: 'binary', flag: 'a'});
+                await fsWriteFile(cryptFp, new Buffer.from(headerFileName), {encoding: 'binary', flag: 'a'});
                 let currentPos = 0;
                 while (true) {
-                    let buf = new Buffer(encrypt_block_size);
+                    let buf = new Buffer.alloc(encrypt_block_size);
                     let r = await fsRead(this.fp, buf, 0, encrypt_block_size, currentPos);
                     let size = r.bytesRead;
                     if (size == 0) {
                         await fsClose(this.fp);
                         break;
                     }
-                    let cryptBuf = new Buffer(tea.encryptBytes(Array.from(buf.slice(0, size)), key));
+                    let cryptBuf = new Buffer.from(tea.encryptBytes(Array.from(buf.slice(0, size)), key));
                     this.fileLen += cryptBuf.length;
                     await fsWriteFile(cryptFp, cryptBuf, {encoding: 'binary', flag: 'a'});
                     currentPos += encrypt_block_size;
@@ -297,7 +297,7 @@ FileEncrypt.prototype.encryptAsync = async function(key, progressCallback, callb
                         lastCallAt = new Date();
                     }
                 }
-                await fsWrite(cryptFp, new Buffer(longToBytes(this.fileLen)), 0, 8, 17);
+                await fsWrite(cryptFp, new Buffer.from(longToBytes(this.fileLen)), 0, 8, 17);
                 if (progressCallback && typeof progressCallback === 'function') {
                     progressCallback(100, startAt);
                 }
@@ -320,17 +320,17 @@ FileEncrypt.prototype.decryptAsync = async function(key, progressCallback, callb
     let lastCallAt = new Date();
     let cryptFp = null;
     if (this.fp) {
-        let fileHeader = new Buffer(this.fileHeader.length);
+        let fileHeader = new Buffer.alloc(this.fileHeader.length);
         await fsRead(this.fp, fileHeader, 0, 5, 0);
         if (tea.bytesToStr(Array.from(fileHeader)) == this.fileHeader) {
             if (key != '') {
                 if (progressCallback && typeof progressCallback === 'function') {
                     progressCallback(0, startAt);
                 }
-                let fileNamePosBuf = new Buffer(4);
-                let fileNameLenBuf = new Buffer(4);
-                let filePosBuf = new Buffer(4);
-                let fileLenBuf = new Buffer(8);
+                let fileNamePosBuf = new Buffer.alloc(4);
+                let fileNameLenBuf = new Buffer.alloc(4);
+                let filePosBuf = new Buffer.alloc(4);
+                let fileLenBuf = new Buffer.alloc(8);
                 await fsRead(this.fp, fileNamePosBuf, 0, 4, 5);
                 await fsRead(this.fp, fileNameLenBuf, 0, 4, 9);
                 await fsRead(this.fp, filePosBuf, 0, 4, 13);
@@ -339,7 +339,7 @@ FileEncrypt.prototype.decryptAsync = async function(key, progressCallback, callb
                 this.fileNameLen = bytesToInt(Array.from(fileNameLenBuf));
                 this.filePos = bytesToInt(Array.from(filePosBuf));
                 this.fileLen = bytesToLong(Array.from(fileLenBuf));
-                let fileNameBuf = new Buffer(this.fileNameLen);
+                let fileNameBuf = new Buffer.alloc(this.fileNameLen);
                 await fsRead(this.fp, fileNameBuf, 0, this.fileNameLen, this.fileNamePos);
                 let fileName = tea.bytesToStr(tea.decryptBytes(Array.from(fileNameBuf), key));
                 this.decryptFilePath = path.join(this.outPath, fileName);
@@ -349,7 +349,7 @@ FileEncrypt.prototype.decryptAsync = async function(key, progressCallback, callb
                     let currentPos = this.filePos;
                     while (true) {
                         let size = 0;
-                        let buf = new Buffer(cryptLength);
+                        let buf = new Buffer.alloc(cryptLength);
                         if (this.fileLen < cryptLength) {
                             let r = await fsRead(this.fp, buf, 0, this.fileLen, currentPos);
                             size = r.bytesRead;
@@ -363,7 +363,7 @@ FileEncrypt.prototype.decryptAsync = async function(key, progressCallback, callb
                         }
                         this.fileLen -= size;
                         let decryptBytes = tea.decryptBytes(Array.from(buf.slice(0, size)), key);
-                        await fsWriteFile(cryptFp, new Buffer(decryptBytes), {encoding: 'binary', flag: 'a'});
+                        await fsWriteFile(cryptFp, new Buffer.from(decryptBytes), {encoding: 'binary', flag: 'a'});
                         currentPos += size;
                         let now = Date.now();
                         if (progressCallback && typeof progressCallback === 'function' && currentPos < this.fileSize && now - lastCallAt.getTime() >= this.progressCallInterval) {
@@ -398,14 +398,14 @@ FileEncrypt.prototype.decryptAsync = async function(key, progressCallback, callb
 FileEncrypt.prototype.info = function(key) {
     let result = {name: ''};
     if (this.fp) {
-        let fileHeader = new Buffer(this.fileHeader.length);
+        let fileHeader = new Buffer.alloc(this.fileHeader.length);
         fs.readSync(this.fp, fileHeader, 0, 5);
         if (tea.bytesToStr(Array.from(fileHeader)) == this.fileHeader) {
             if (key != '') {
-                let fileNamePosBuf = new Buffer(4);
-                let fileNameLenBuf = new Buffer(4);
-                let filePosBuf = new Buffer(4);
-                let fileLenBuf = new Buffer(8);
+                let fileNamePosBuf = new Buffer.alloc(4);
+                let fileNameLenBuf = new Buffer.alloc(4);
+                let filePosBuf = new Buffer.alloc(4);
+                let fileLenBuf = new Buffer.alloc(8);
                 fs.readSync(this.fp, fileNamePosBuf, 0, 4);
                 fs.readSync(this.fp, fileNameLenBuf, 0, 4);
                 fs.readSync(this.fp, filePosBuf, 0, 4);
@@ -414,7 +414,7 @@ FileEncrypt.prototype.info = function(key) {
                 this.fileNameLen = bytesToInt(Array.from(fileNameLenBuf));
                 this.filePos = bytesToInt(Array.from(filePosBuf));
                 this.fileLen = bytesToLong(Array.from(fileLenBuf));
-                let fileNameBuf = new Buffer(this.fileNameLen);
+                let fileNameBuf = new Buffer.alloc(this.fileNameLen);
                 fs.readSync(this.fp, fileNameBuf, 0, this.fileNameLen, this.fileNamePos);
                 result.name = tea.bytesToStr(tea.decryptBytes(Array.from(fileNameBuf), key));
             } else {
