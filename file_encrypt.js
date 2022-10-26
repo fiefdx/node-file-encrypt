@@ -2,12 +2,12 @@
 
 "use strict";
 
-const path = require('path');
-const fs = require('fs');
-const util = require('util');
+import path from 'path';
+import fs from 'fs';
+import util from 'util';
 
-const tea = require('node-tea');
-const sha1 = require('sha1');
+import tea from 'node-tea';
+import sha1 from 'sha1';
 
 let encrypt_block_size = 1024 * 8;
 
@@ -71,7 +71,7 @@ function bytesToLong(b) {
     return i;
 }
 
-function FileEncrypt(inPath, outPath, fileType, cryptFileName = true) {
+export function FileEncrypt(inPath, outPath, fileType, cryptFileName = true) {
     this.inPath = inPath;
     this.outPath = outPath || path.dirname(this.inPath); // if not specified outPath, then outPath will be inPath's base path
     this.fileName = path.basename(inPath);
@@ -427,5 +427,3 @@ FileEncrypt.prototype.info = function(key) {
     fs.closeSync(this.fp);
     return result;
 }
-
-module.exports.FileEncrypt = FileEncrypt;
