@@ -3,6 +3,7 @@
   "version": "0.0.7",
   "description": "a file encrypt & decrypt package based on TEA",
   "main": "file_encrypt.js",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
