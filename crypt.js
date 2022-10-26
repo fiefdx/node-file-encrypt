@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 
-const util = require('util');
+import util from 'util';
 
-const logUpdate = require('log-update');
-const duration = require('duration');
-const argv = require('minimist')(process.argv.slice(2));
-const fileEncrypt = require('./file_encrypt.js').FileEncrypt;
+import logUpdate from 'log-update';
+import duration from 'duration';
+import minimist from 'minimist';
+import { FileEncrypt as fileEncrypt } from './file_encrypt.js';
+
+const argv = minimist(process.argv.slice(2));
 
 let defaults = {
     p: '', // password
